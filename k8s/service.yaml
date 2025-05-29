@@ -1,0 +1,16 @@
+# service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: vite-react-app-service # Puedes cambiar este nombre
+spec:
+  selector:
+    app: vite-react-app # DEBE COINCIDIR con las 'labels' de tu Deployment y Pods
+  ports:
+    - protocol: TCP
+      port: 80 # Puerto en el que el servicio estará disponible DENTRO del clúster Kubernetes
+      targetPort: 80 # Puerto al que el servicio redirigirá el tráfico (el 'containerPort' de tu Deployment)
+  type: NodePort
+    # Expone el servicio en un puerto estático en la IP de cada Nodo del clúster.
+    # Esto facilita el acceso local y para Ngrok.
+    # Otras opciones: ClusterIP (solo interno), LoadBalancer (para cloud providers).

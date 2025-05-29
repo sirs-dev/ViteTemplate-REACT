@@ -1,0 +1,30 @@
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vite-react-app-deployment # Puedes cambiar este nombre si quieres
+  labels:
+    app: vite-react-app # Etiqueta para agrupar y seleccionar recursos
+spec:
+  replicas: 2 # Número de pods (instancias) que quieres correr
+  selector:
+    matchLabels:
+      app: vite-react-app # Kubernetes usa esto para encontrar los pods que gestiona
+  template:
+    metadata:
+      labels:
+        app: vite-react-app # Los pods también deben tener esta etiqueta
+    spec:
+      containers:
+        - name: vite-react-app-container # Nombre del contenedor dentro del pod
+          image: vite-react-app:latest # IMPORTANTE: Nombre y tag de tu imagen Docker
+          imagePullPolicy: IfNotPresent # Para asegurar que siempre intente obtener la imagen más reciente
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          ports:
+            - containerPort: 80 # El puerto que tu Nginx expone DENTRO del contenedor (definido en tu Dockerfile y nginx.conf)
