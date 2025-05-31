@@ -16,7 +16,7 @@ const App = () => {
           </button>
         </p>
         <p>
-          Edit <code>App.jsx</code> and save to test HMR updates.
+          Edit <code>App.jsx</code> and save to test HMR updates. Prueba.
         </p>
         <p>
           <a

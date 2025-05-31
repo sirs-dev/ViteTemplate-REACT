@@ -1,14 +1,18 @@
 // Jenkinsfile
 
 // Define el nombre de la imagen y la etiqueta
-def imageName = "vite-react-app" 
+def imageName = "vite-react-app" // Nombre de imagen local, ya que Kubernetes lo buscará localmente
 def imageTag = "latest"
 // Si en el futuro usas Docker Hub, sería:
 // def imageName = "TU_USUARIO_DOCKERHUB/vite-react-app"
 
 pipeline {
-    agent any // Ejecutar en cualquier agente disponible (en este caso, el master de Jenkinssssss)
+    agent any // Ejecutar en cualquier agente disponible (en este caso, el master de Jenkins)
 
+    environment {
+        // Si usaras Docker Hub, aquí definirías el ID de la credencial
+        // DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
+    }
 
     stages {
         stage('Checkout Code') {
