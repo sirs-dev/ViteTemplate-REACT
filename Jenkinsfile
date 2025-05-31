@@ -18,10 +18,9 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo "Construyendo la imagen Docker: ${imageName}:${imageTag}"
-                script {
-                    // Usa el plugin Docker Pipeline para construir la imagen
-                    def customImage = docker.build("${imageName}:${imageTag}", "./") // "./" o "." es el contexto
-                    // No es necesario hacer customImage.push() si no usas un registry externo
+                script { // El bloque script es crucial
+                    def customImage = docker.build("${imageName}:${imageTag}", "./")
+                    // Aquí no hay ningún 'sh "docker build ..."'
                 }
             }
         }
