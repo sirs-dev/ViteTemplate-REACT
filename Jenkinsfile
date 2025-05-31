@@ -28,7 +28,7 @@ pipeline {
 
                     } catch (e) {
                         echo "DEBUG: ERROR en el bloque script/try: ${e.toString()}"
-                        // No uses currentBuild.result = 'FAILURE' aquí directamente, 'error' ya lo hace.
+                        // No uses currentBuild.result = 'FAILURE' aquí directamente, 'error' ya lo hace
                         error "Fallo en el stage de construcción de imagen: ${e.getMessage()}"
                     }
                 }
