@@ -1,7 +1,7 @@
 // Jenkinsfile
 
 // Define el nombre de la imagen y la etiqueta
-def imageName = "vite-react-app" // Nombre de imagen local, ya que Kubernetes lo buscará localmente
+def imageName = "vite-react-app" 
 def imageTag = "latest"
 // Si en el futuro usas Docker Hub, sería:
 // def imageName = "TU_USUARIO_DOCKERHUB/vite-react-app"
