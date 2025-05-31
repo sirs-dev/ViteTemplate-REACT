@@ -1,51 +1,49 @@
 // Jenkinsfile
 
-// Define el nombre de la imagen y la etiqueta
-def imageName = "vite-react-app" // Nombre de imagen local
+def imageName = "vite-react-app"
 def imageTag = "latest"
 
 pipeline {
-    agent any // Ejecutar en cualquier agente disponible (el master de Jenkins)
-
-    // No se necesita un bloque 'environment {}' vacío.
+    agent any
 
     stages {
         // El checkout del código fuente (SCM) ocurre implícitamente
-        // al inicio del pipeline si está configurado en el Job de Jenkins.
-        // Si necesitaras hacer un checkout explícito en un workspace diferente o
-        // de otro repositorio, aquí podrías añadir un stage con 'checkout scm' o 'git'.
 
-        stage('Build Docker Image') {
+        stage('Build Docker Image DEBUG') { // <--- NOMBRE DEL STAGE CAMBIADO PARA DEPURAR
             steps {
-                echo "Construyendo la imagen Docker: ${imageName}:${imageTag}"
-                script { // El bloque script es crucial
-                    def customImage = docker.build("${imageName}:${imageTag}", "./")
-                    // Aquí no hay ningún 'sh "docker build ..."'
+                echo "DEBUG: Iniciando stage de construcción de imagen."
+                script {
+                    try {
+                        echo "DEBUG: Intentando verificar la versión de Docker a través del plugin..."
+                        // Intenta un comando Docker simple a través del plugin para ver si el plugin está activo
+                        docker.image('alpine').pull() // Intenta jalar una imagen pequeña
+                        echo "DEBUG: docker.image('alpine').pull() funcionó."
+
+                        echo "DEBUG: Ahora intentando docker.build("${imageName}:${imageTag}", "./")"
+                        // El segundo argumento de docker.build puede incluir argumentos adicionales para el comando docker build
+                        // Por ejemplo, si tu Dockerfile está en otro lugar o tiene un nombre diferente:
+                        // def myImage = docker.build("${imageName}:${imageTag}", "-f path/to/MyDockerfile ./app_context")
+                        def myImage = docker.build("${imageName}:${imageTag}", "--pull=true -f Dockerfile ./") // Asegura pull de base, usa Dockerfile en contexto actual
+                        echo "DEBUG: docker.build parece haber funcionado. ID de imagen: ${myImage.id}"
+
+                    } catch (e) {
+                        echo "DEBUG: ERROR en el bloque script/try: ${e.toString()}"
+                        // No uses currentBuild.result = 'FAILURE' aquí directamente, 'error' ya lo hace.
+                        error "Fallo en el stage de construcción de imagen: ${e.getMessage()}"
+                    }
                 }
+                echo "DEBUG: Finalizando stage de construcción de imagen."
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
                 echo "Desplegando/Actualizando en Kubernetes..."
-
-                // Asegúrate de que los archivos YAML estén en la ruta correcta
-                // relativa al workspace del pipeline (raíz del proyecto clonado).
-                // Si están en 'k8s/deployment.yaml', usa esa ruta.
                 sh "kubectl apply -f k8s/deployment.yaml"
                 sh "kubectl apply -f k8s/service.yaml"
-
-                // Esperar a que el deployment se estabilice y luego forzar un reinicio.
-                // El '|| true' es para que el pipeline no falle si el status ya es correcto.
                 sh "kubectl rollout status deployment/vite-react-app-deployment --timeout=120s || true"
                 sh "kubectl rollout restart deployment/vite-react-app-deployment"
-
-                echo "Deployment completado. Esperando a que los nuevos pods estén listos..."
-                // Añadir una pequeña espera para dar tiempo a que los pods se reinicien.
-                // Esto es opcional, 'rollout status' ya debería cubrirlo en parte.
-                // sleep(time: 15, unit: 'SECONDS') // Espera 15 segundos
-
-                echo "Revisa los pods:"
+                echo "Deployment completado. Revisa los pods:"
                 sh "kubectl get pods -l app=vite-react-app"
             }
         }
@@ -60,7 +58,6 @@ pipeline {
         }
         failure {
             echo 'Pipeline falló!'
-            // Aquí podrías añadir notificaciones de fallo (ej. email, Slack)
         }
     }
 }
