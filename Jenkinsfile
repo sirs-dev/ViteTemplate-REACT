@@ -49,6 +49,14 @@ pipeline {
             }
         }
 
+        stage('Test Docker Access') {
+            steps {
+                sh 'which docker'
+                sh 'docker --version'
+                sh 'ls -l /var/run/docker.sock' // Verifica que el socket montado sea visible
+            }
+        }
+
         stage('Deploy to Kubernetes') {
             steps {
                 echo "Desplegando/Actualizando en Kubernetes..."
