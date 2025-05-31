@@ -7,9 +7,9 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'node24' // <--- ASEGÚRATE DE QUE ESTE NOMBRE COINCIDA EXACTAMENTE
+        nodejs 'node24'
     }
-    
+
     stages {
         stage('Checkout Code') {
             steps {
