@@ -4,27 +4,30 @@ def imageName = "vite-react-app"
 def imageTag = "latest"
 
 pipeline {
-    agent any // Ejecuta en el nodo maestro de Jenkins donde está montado el docker.sock
+    agent {
+        docker {
+            image 'node:18-alpine' // O la versión de Node que prefieras, ej. node:20-alpine, node:lts-alpine
+            args '-v /var/run/docker.sock:/var/run/docker.sock' // Si necesitas docker DENTRO de este agente Node
+                                                               // (no para npm, pero sí si quisieras construir la imagen Docker desde aquí)
+                                                               // Para este caso, solo necesitamos Node.js para npm ci y npm test
+        }
+    } // Ejecuta en el nodo maestro de Jenkins donde está montado el docker.sock
 
     stages {
         stage('Checkout Code') {
             steps {
-                // El checkout implícito es suficiente, o puedes mantener tu 'checkout scm' si lo prefieres
-                // Para simplificar, podemos confiar en el checkout implícito que Jenkins hace
-                // al inicio de un pipeline definido desde SCM.
-                // Si quieres ser explícito:
-                // checkout scm
+                checkout scm
                 echo 'Código fuente clonado.'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                echo 'Instalando dependencias del proyecto...'
-                // Si tu Dockerfile ya hace 'npm ci', este paso podría ser redundante
-                // para el build de la imagen, pero es bueno para ejecutar tests primero.
-                // Si solo es para el build, y tu Dockerfile lo maneja, puedes omitir este sh.
+                echo 'Instalando dependencias y ejecutando pruebas...'
+                sh 'node -v' // Verifica la versión de Node
+                sh 'npm -v'  // Verifica la versión de npm
                 sh 'npm ci'
+                sh 'npm test'
             }
         }
 
