@@ -7,7 +7,7 @@ def imageTag = "latest"
 // def imageName = "TU_USUARIO_DOCKERHUB/vite-react-app"
 
 pipeline {
-    agent any // Ejecutar en cualquier agente disponible (en este caso, el master de Jenkinsss)
+    agent any // Ejecutar en cualquier agente disponible (en este caso, el master de Jenkinssssss)
 
 
     stages {
