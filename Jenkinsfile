@@ -6,6 +6,10 @@ def imageTag = "latest"
 pipeline {
     agent any
 
+    tools {
+        nodejs 'node24' // <--- ASEGÚRATE DE QUE ESTE NOMBRE COINCIDA EXACTAMENTE
+    }
+    
     stages {
         stage('Checkout Code') {
             steps {
