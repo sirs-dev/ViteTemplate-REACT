@@ -37,10 +37,14 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                echo "Construyendo la imagen Docker: ${imageName}:${imageTag}"
-                script { // Necesario para usar variables y lógica de Groovy con los pasos de Docker
-                    // Utiliza el paso 'docker.build()' del plugin Docker Pipeline
-                    def customImage = docker.build("${imageName}:${imageTag}", "--pull --no-cache .")
+                echo "Construyendo la imagen Docker: vite-react-app:latest"
+                script { 
+                    def customImage = docker.build("vite-react-app:latest", "--pull --no-cache .")
+                    if (customImage) {
+                        echo "Imagen Docker ${customImage.id} construida con éxito."
+                    } else {
+                        error "La construcción de la imagen Docker falló."
+                    }
                 }
             }
         }
