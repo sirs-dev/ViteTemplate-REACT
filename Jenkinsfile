@@ -11,7 +11,7 @@ pipeline {
 
         stage('Build Docker Image DEBUG') { // <--- NOMBRE DEL STAGE CAMBIADO PARA DEPURAR
             steps {
-                echo "DEBUG: Iniciando stage de construcción de imagen"
+                echo "DEBUG: Iniciando stage de construcción de imagen."
                 script {
                     try {
                         echo "DEBUG: Intentando verificar la versión de Docker a través del plugin..."
