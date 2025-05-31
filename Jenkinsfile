@@ -1,72 +1,67 @@
 // Jenkinsfile
 
-// Define el nombre de la imagen y la etiqueta
-def imageName = "vite-react-app" // Nombre de imagen local, ya que Kubernetes lo buscará localmente
+def imageName = "vite-react-app"
 def imageTag = "latest"
-// Si en el futuro usas Docker Hub, sería:
-// def imageName = "TU_USUARIO_DOCKERHUB/vite-react-app"
 
 pipeline {
-    agent any // Ejecutar en cualquier agente disponible (en este caso, el master de Jenkins)
+    agent any // Ejecuta en el nodo maestro de Jenkins donde está montado el docker.sock
 
     stages {
         stage('Checkout Code') {
             steps {
-                echo 'Clonando el repositorio...'
-                checkout scm // Clona el repositorio configurado en el job de Jenkins
+                // El checkout implícito es suficiente, o puedes mantener tu 'checkout scm' si lo prefieres
+                // Para simplificar, podemos confiar en el checkout implícito que Jenkins hace
+                // al inicio de un pipeline definido desde SCM.
+                // Si quieres ser explícito:
+                // checkout scm
+                echo 'Código fuente clonado.'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                echo 'Instalando dependencias del proyecto...'
+                // Si tu Dockerfile ya hace 'npm ci', este paso podría ser redundante
+                // para el build de la imagen, pero es bueno para ejecutar tests primero.
+                // Si solo es para el build, y tu Dockerfile lo maneja, puedes omitir este sh.
+                sh 'npm ci'
+            }
+        }
+
+        stage('Run Unit Tests') {
+            steps {
+                echo 'Ejecutando pruebas unitarias...'
+                sh 'npm test'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 echo "Construyendo la imagen Docker: ${imageName}:${imageTag}"
-                // Usamos sh porque estamos montando el docker.sock,
-                // lo que permite al Jenkins ejecutar comandos docker directamente en el host.
-                // El Dockerfile multi-etapa se encargará de la construcción de Node y Nginx.
-                sh "docker build -t ${imageName}:${imageTag} ."
-            }
-        }
+                script { // Necesario para usar variables y lógica de Groovy con los pasos de Docker
+                    // Utiliza el paso 'docker.build()' del plugin Docker Pipeline
+                    def customImage = docker.build("${imageName}:${imageTag}", "--pull --no-cache .")
+                    // O simplemente:
+                    // def customImage = docker.build("${imageName}:${imageTag}", ".")
 
-        // Opcional: Stage para subir a Docker Hub (comentado por ahora)
-        /*
-        stage('Push Docker Image') {
-            when { expression { return env.DOCKER_CREDENTIALS_ID != null && env.DOCKER_CREDENTIALS_ID != "" } }
-            steps {
-                echo "Subiendo la imagen Docker: ${imageName}:${imageTag} a Docker Hub..."
-                script {
-                    docker.withRegistry('https://registry.hub.docker.com', DOCKER_CREDENTIALS_ID) {
-                        docker.image("${imageName}:${imageTag}").push()
-                    }
+                    // Opcional: Puedes verificar si la imagen se construyó
+                    // if (customImage) {
+                    //    echo "Imagen Docker ${customImage.id} construida con éxito."
+                    // } else {
+                    //    error "La construcción de la imagen Docker falló."
+                    // }
                 }
             }
         }
-        */
 
         stage('Deploy to Kubernetes') {
             steps {
                 echo "Desplegando/Actualizando en Kubernetes..."
-                // Asegúrate de que kubectl está en el PATH del agente Jenkins
-                // o que el plugin Kubernetes CLI está configurado y se usa correctamente.
-                // Como estamos usando Docker Desktop, Jenkins (corriendo en Docker)
-                // necesitará acceso a la configuración de kubectl del host o tener kubectl instalado y configurado.
-
-                // Para que Jenkins use el kubectl del host (Docker Desktop):
-                // Una opción es montar el .kube/config dentro del contenedor Jenkins,
-                // o ejecutar kubectl desde un script que lo configure.
-                // Dado que montamos docker.sock, Jenkins está actuando como un cliente Docker en el host.
-                // El kubectl también debe actuar como un cliente en el host.
-                // El plugin 'Kubernetes CLI' ayuda a gestionar esto.
-
-                // Si los archivos YAML están en una subcarpeta k8s/, ajusta la ruta.
-                // Ejemplo: sh "kubectl apply -f k8s/deployment.yaml"
+                // Asegúrate de que k8s/deployment.yaml y k8s/service.yaml existan en tu workspace
                 sh "kubectl apply -f k8s/deployment.yaml"
                 sh "kubectl apply -f k8s/service.yaml"
-
-                // Forzar un reinicio de los pods del deployment para que tomen la nueva imagen :latest
-                // Esto es importante si imagePullPolicy es IfNotPresent y solo actualizas el tag 'latest'.
                 sh "kubectl rollout status deployment/vite-react-app-deployment --timeout=120s || true"
                 sh "kubectl rollout restart deployment/vite-react-app-deployment"
-
                 echo "Deployment completado. Revisa los pods:"
                 sh "kubectl get pods -l app=vite-react-app"
             }
