@@ -25,10 +25,11 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo "Construyendo la imagen Docker: ${imageName}:${imageTag}"
-                // Usamos sh porque estamos montando el docker.sock,
-                // lo que permite al Jenkins ejecutar comandos docker directamente en el host.
-                // El Dockerfile multi-etapa se encargará de la construcción de Node y Nginx.
-                sh "docker build -t ${imageName}:${imageTag} ."
+                script { // Necesitas un bloque script para usar las funciones de Docker Pipeline
+                    def customImage = docker.build("${imageName}:${imageTag}", ".")
+                    // Opcionalmente, si necesitaras hacer algo con la imagen después, como subirla:
+                    // customImage.push() // (Esto requeriría credenciales y el stage 'Push Docker Image' configurado)
+                }
             }
         }
 
